@@ -53,7 +53,6 @@ public class HeaderRequest {
 
         }
         // GET FIRST LINE, HEAD OR GET
-        // System.out.println("HEAD");
         String[] Getter = lines[0].split("\\s+");
         if (!(Getter[0].equalsIgnoreCase("GET") || Getter[0].equalsIgnoreCase("HEAD"))){
             return;

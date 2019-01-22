@@ -2,49 +2,10 @@ package objectProyect;
 import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class HeaderResponse {
-    private static final String[][] HttpReplies = {{"100", "Continue"},
-        {"101", "Switching Protocols"},
-        {"200", "OK"},
-        {"201", "Created"},
-        {"202", "Accepted"},
-        {"203", "Non-Authoritative Information"},
-        {"204", "No Content"},
-        {"205", "Reset Content"},
-        {"206", "Partial Content"},
-        {"300", "Multiple Choices"},
-        {"301", "Moved Permanently"},
-        {"302", "Found"},
-        {"303", "See Other"},
-        {"304", "Not Modified"},
-        {"305", "Use Proxy"},
-        {"306", "(Unused)"},
-        {"307", "Temporary Redirect"},
-        {"400", "Bad Request"},
-        {"401", "Unauthorized"},
-        {"402", "Payment Required"},
-        {"403", "Forbidden"},
-        {"404", "Not Found"},
-        {"405", "Method Not Allowed"},
-        {"406", "Not Acceptable"},
-        {"407", "Proxy Authentication Required"},
-        {"408", "Request Timeout"},
-        {"409", "Conflict"},
-        {"410", "Gone"},
-        {"411", "Length Required"},
-        {"412", "Precondition Failed"},
-        {"413", "Request Entity Too Large"},
-        {"414", "Request-URI Too Long"},
-        {"415", "Unsupported Media Type"},
-        {"416", "Requested Range Not Satisfiable"},
-        {"417", "Expectation Failed"},
-        {"500", "Internal Server Error"},
-        {"501", "Not Implemented"},
-        {"502", "Bad Gateway"},
-        {"503", "Service Unavailable"},
-        {"504", "Gateway Timeout"},
-        {"505", "HTTP Version Not Supported"}};
     String httpVersion;
     int statusCode;
     boolean success;
@@ -52,14 +13,15 @@ public class HeaderResponse {
     String date;
     String server;
     String cast;
-    String contentLength;
+    int contentLength;
     String contentType;
     String lastModified;
+    SimpleDateFormat format = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z");
 
     byte[] body;
 
 
-    public HeaderResponse(String httpVersion, int statusCode, boolean success, boolean connectionClosed, String date, String server, String cast, String contentLength, String contentType) {
+    public HeaderResponse(String httpVersion, int statusCode, boolean success, boolean connectionClosed, String date, String server, String cast, int contentLength, String contentType) {
         this.httpVersion = httpVersion;
         this.statusCode = statusCode;
         this.success = success;
@@ -72,34 +34,66 @@ public class HeaderResponse {
     }
 
     public HeaderResponse(){
+        this.httpVersion = "HTTP/1.1";
+        this.connectionClosed = true;
         this.statusCode = 200;
         this.connectionClosed = false;
-        this.date = "" + LocalDateTime.now();
+        
+        Date now = new Date();
+        this.date = format.format(now);
         this.server = "Eclipse's Server";
         this.lastModified = "" + LocalDateTime.now();
     }
 
+    public void decompile(String decomlpile){
+        // Split by newlines
+        String[] lines = decomlpile.split("\\r?\\n");
+        // REMOVE SPACES
+        for(int i=1;i<lines.length;i++){
+            lines[i] = lines[i].replaceAll(" ","");
+        }
+        // GET FIRST LINE, HEAD OR GET
+        String[] Getter = lines[0].split("\\s+");
+        setStatusCode(Integer.parseInt(Getter[1]));
+
+        // GET CONTENT
+        String contentOfHeader[][] = new String[lines.length-1][2];
+        for (int i = 1; i < lines.length; i++){
+            contentOfHeader[i-1] = lines[i].split(":");
+        }
+        for (String[] var : contentOfHeader) {
+            if (var[0].equalsIgnoreCase("DATE"))
+                setDate(var[1]);
+            if (var[0].equalsIgnoreCase("Server"))
+                setServer(var[1]);
+            if (var[0].equalsIgnoreCase("Last-modified"))
+                setLastMod(var[1]);
+            if (var[0].equalsIgnoreCase("Content-length"))
+                setContentLength(Integer.parseInt(var[1]));
+            if (var[0].equalsIgnoreCase("content-type"))
+                setContentType(var[1]);
+        }
+    }
+
     @Override
     public String toString(){
+        Date now = new Date();
+        String date = format.format(now);
         String headerInString = "";
         if (httpVersion.contentEquals("") || httpVersion == null)
             httpVersion = "HTML 1.1";
         headerInString += httpVersion + " "+ this.statusCode +" OK" + "\n";
         if (connectionClosed)
             headerInString += "connection: close"+ "\n";
-
         headerInString += "Date: " + date + "\n";
         headerInString += "Server: Eclipse's Server \n";
-        
         headerInString += "Last-Modified: " + date + "\n";
-        headerInString += "Content-Length: " + this.contentLength + "\n";
-        headerInString += "Content-Type: text/html \n";
-
+        headerInString += "Content-Length: " + contentLength + "\n";
+        headerInString += "Content-Type: text/html\n";
         headerInString += "\n";
         if (body != null)
-            for (int i = 0; i < body.length; i++){
-               headerInString += body[i];
-                }
+            for (int i = 0; i < body.length; i++)
+               headerInString += (char) body[i];
         return headerInString;
     }
     public String getHttpVersion() {
@@ -158,11 +152,11 @@ public class HeaderResponse {
         this.cast = cast;
     }
 
-    public String getContentLength() {
+    public int getContentLength() {
         return contentLength;
     }
 
-    public void setContentLength(String contentLength) {
+    public void setContentLength(int contentLength) {
         this.contentLength = contentLength;
     }
 
@@ -175,9 +169,17 @@ public class HeaderResponse {
     }
     public void setBody(byte[] body){
         this.body = body;
+        contentLength = body.length;
     }
     public byte[] getBody(){
         return body;
+    }
+    public String getLastMod() {
+        return lastModified;
+    }
+
+    public void setLastMod(String lastModified) {
+        this.lastModified = lastModified;
     }
 
     private byte[] stringToByte(String userInput){

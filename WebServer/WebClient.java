@@ -13,6 +13,7 @@ class WebClient
     // Header
      public static void main(String argv[]) {
         HeaderRequest headerRequest;
+        HeaderResponse headResponse = new HeaderResponse();
         WebClient client = new WebClient();
         Scanner scanner;
         byte[] toSend;
@@ -20,18 +21,23 @@ class WebClient
         int serverPort = 2407;
         String ipServer = "127.0.0.1";
         String userInput;
-        System.out.print("User: ");
+        String recivedString;
         scanner = new Scanner(System.in);
         userInput = scanner.nextLine();
         client.connect(ipServer, serverPort);
         headerRequest = new HeaderRequest();
         headerRequest.setPath("hello.com");
         while (true){
-            userInput = headerRequest.toString() + userInput;
+            headerRequest.setPath(userInput);
+            userInput = headerRequest.toString();
             toSend = client.stringToByte(userInput);
             try {
              client.sendBytes(toSend, toSend.length);
              recivedBytes = client.readBytes();
+             recivedString = client.byteToString(recivedBytes);
+             headResponse.decompile(recivedString);
+             headResponse.setBody(client.readBody(headResponse.getContentLength()));
+             System.out.println(headResponse);
             } catch (Exception e) {
              System.err.println("ERROR: client sending mssg");
             }
@@ -57,6 +63,13 @@ class WebClient
         
      }
      
+     public String byteToString(byte[] charsOfByte){
+        String message = "";
+        for (byte chars : charsOfByte) {
+            message += (char) chars;
+        }
+        return message;
+    }
 
      public void sendBytes(byte[] myByteArray, int len) throws IOException {
         if (len < 0)
@@ -76,8 +89,8 @@ class WebClient
         // System.out.println((char)dis.readByte());
         while (!doubleNL){
             data[counter] = dis.readByte();
-            System.out.print((char) data[counter]);
-            if (data[counter] == newlineUF8){
+            // System.out.print((char) data[counter]);
+            if (data[counter] == newlineUF8 || data[counter] == (byte)'\n'){
                 newLineCounter++;
             } else if(!(data[counter] == (byte) '\n')){
                 newLineCounter = 0;
@@ -89,15 +102,15 @@ class WebClient
             }
         }
         return data;
-        // int len = dis.readInt();
-        /* int len = 10;
+        }
+
+    public byte[] readBody(int len) throws IOException {
         byte[] data = new byte[len];
         if (len > 0) {
             dis.readFully(data);
         }
-        return data; */
-        }
-
+        return data;
+    }
     // W: no puede ser null 
     public byte[] stringToByte(String userInput){
         byte[] charsOfString = new byte[userInput.length()];

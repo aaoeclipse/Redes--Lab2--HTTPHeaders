@@ -113,13 +113,13 @@ final class HttpRequest implements Runnable{
             headerResponse.setBody(server.stringToByte("<HTML>Hola</HTML>"));
 
 
-            toSend = "HTTP/1.1 304 Not Modified\n"+
+            /* toSend = "HTTP/1.1 304 Not Modified\n"+
                 "Date: Sun, 20 Jan 2019 18:25:25 GMT\n"+
                 "Server: Apache/2.4.29 (Ubuntu)\n" +
                 "Connection: Keep-Alive\n"+
                 "Keep-Alive: timeout=5, max=100\n"+
-                "ETag: \"13-57fe6ebe0aed2\"\n\n<HTML>Hello</HTML>\n\n";
-            messageToSend = server.stringToByte(toSend);
+                "ETag: \"13-57fe6ebe0aed2\"\n\n<HTML>Hello</HTML>\n\n"; */
+            messageToSend = server.stringToByte(headerResponse.toString());
             server.sendBytes(messageToSend, clientSocket);
         }
        } catch (Exception e) {
